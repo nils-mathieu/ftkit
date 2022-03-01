@@ -28,3 +28,10 @@ pub fn read_line() -> String {
 
     result
 }
+
+/// Reads a number from *stdin*.
+pub fn read_number() -> i32 {
+    read_line()
+        .parse()
+        .expect("the provided value is not a number")
+}
