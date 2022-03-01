@@ -1,6 +1,6 @@
 [package]
 name = "nls"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Nils Mathieu <nils.mathieu.contact@gmail.com>"]
 description = "A small set of utilities for newcomers learning Rust."
