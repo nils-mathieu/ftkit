@@ -1,11 +1,13 @@
 [package]
 name = "ftkit"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2021"
 authors = ["Nils Mathieu <nmathieu@student.42.fr>"]
 description = "A small set of utilities for newcomers learning Rust."
 license-file = "LICENSE.md"
 readme = "README.md"
+documentation = "https://docs.rs/ftkit"
+repository = "https://github.com/nils-mathieu/ftkit"
 
 [dependencies]
 getrandom = "0.2"
