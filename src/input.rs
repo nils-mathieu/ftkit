@@ -36,7 +36,9 @@ pub fn read_line() -> String {
 
 /// Reads a number from *stdin*.
 pub fn read_number() -> i32 {
-    read_line()
-        .parse()
-        .expect("the provided value is not a number")
+    loop {
+        if let Ok(val) = read_line().parse() {
+            break val;
+        }
+    }
 }
