@@ -1,4 +1,4 @@
-//! A small set of utilities.
+//! A small set of utilities for newcomers learning Rust.
 
 mod input;
 pub use self::input::*;
