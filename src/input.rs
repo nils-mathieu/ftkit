@@ -1,4 +1,15 @@
-/// Reads a single line from *stdin*.
+/// Reads a single line from the standard input.
+///
+/// # Panics
+///
+/// This function panics if an error occurs whilst reading the standard input of the program.
+///
+/// # Examples
+///
+/// ```ignore
+/// let line = ftkit::read_line();
+/// println!("You just wrote: {line}");
+/// ```
 pub fn read_line() -> String {
     let mut result = String::new();
     std::io::stdin()
@@ -34,7 +45,20 @@ pub fn read_line() -> String {
     result
 }
 
-/// Reads a number from *stdin*.
+/// Reads a number from the standard input. The function loops indefinitely until a valid number is
+/// provided.
+///
+/// # Panics
+///
+/// This function panics if it fails to read from the standard input of the program.
+///
+/// # Examples
+///
+/// ```ignore
+/// println!("How old are you?");
+/// let age = ftkit::read_number();
+/// println!("Oh? So you are {age} year(s) old?");
+/// ```
 pub fn read_number() -> i32 {
     loop {
         if let Ok(val) = read_line().parse() {
