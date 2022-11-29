@@ -11,8 +11,6 @@
 /// println!("You just wrote: {line}");
 /// ```
 pub fn read_line() -> String {
-    print!(">_ ");
-
     let mut result = String::new();
     std::io::stdin()
         .read_line(&mut result)

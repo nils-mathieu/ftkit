@@ -1,6 +1,6 @@
 [package]
 name = "ftkit"
-version = "0.1.8"
+version = "0.1.9"
 edition = "2021"
 authors = ["Nils Mathieu <nmathieu@student.42.fr>"]
 description = "A small set of utilities for newcomers learning Rust."
