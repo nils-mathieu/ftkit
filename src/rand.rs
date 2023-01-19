@@ -79,11 +79,13 @@ pub fn random_number(range: impl RangeBounds<i32>) -> i32 {
         "can't generate a random number within an empty range"
     );
 
-    let raw = next_u64() as u32;
+    let raw = next_u64() as i32;
     if min == i32::MIN && max == i32::MAX {
-        raw as i32
+        raw
     } else {
-        raw.wrapping_rem((max as u32).wrapping_sub(min as u32).wrapping_add(1))
+        let range_size = (max as u32).wrapping_sub(min as u32).wrapping_add(1);
+        (raw as u32)
+            .wrapping_rem(range_size)
             .wrapping_add(min as u32) as i32
     }
 }
