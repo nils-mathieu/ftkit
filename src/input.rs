@@ -6,7 +6,7 @@
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```no_run
 /// let line = ftkit::read_line();
 /// println!("You just wrote: {line}");
 /// ```
@@ -54,7 +54,7 @@ pub fn read_line() -> String {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```no_run
 /// println!("How old are you?");
 /// let age = ftkit::read_number();
 /// println!("Oh? So you are {age} year(s) old?");
