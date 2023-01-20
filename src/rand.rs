@@ -15,16 +15,22 @@ thread_local! {
 fn next_u64() -> u64 {
     RAND_STATE.with(|state| {
         if state.get() == 0 {
-            state.set(
-                std::time::SystemTime::UNIX_EPOCH
-                    .elapsed()
-                    .unwrap()
-                    .as_nanos() as u64,
-            );
+            let mut seed = std::time::SystemTime::UNIX_EPOCH
+                .elapsed()
+                .unwrap()
+                .as_nanos() as u64;
+
+            // Use SplitMix64 to improve the quality of the seed.
+            // Credits:
+            //   https://prng.di.unimi.it/splitmix64.c
+            seed = seed.wrapping_add(0x9e3779b97f4a7c15);
+            seed = (seed ^ seed.wrapping_shr(30)).wrapping_mul(0xbf58476d1ce4e5b9);
+            seed = (seed ^ seed.wrapping_shr(27)).wrapping_mul(0x94d049bb133111eb);
+            state.set(seed ^ seed.wrapping_shr(31));
         }
 
         // Credits:
-        //  WyRand: https://github.com/wangyi-fudan/wyhash
+        //   WyRand: https://github.com/wangyi-fudan/wyhash
         state.set(state.get().wrapping_add(0xa0761d6478bd642f));
         let t = (state.get() as u128).wrapping_mul((state.get() ^ 0xe7037ed1a0b428db) as u128);
         (t.wrapping_shr(64) ^ t) as u64
