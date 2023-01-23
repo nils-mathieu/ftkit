@@ -3,6 +3,10 @@ use std::mem::MaybeUninit;
 use std::sync::atomic::AtomicU8;
 use std::sync::atomic::Ordering::*;
 
+// TODO:
+//  All of this `OnceCell<T>` nonsense should be replaced by the standard library's when it is
+//  stabilized.
+
 /// Indicates that a [`OnceCell<T>`] is not yet initialized.
 const UNINIT: u8 = 0;
 /// Indicates that a [`OnceCell<T>`] is currently being initialized.
