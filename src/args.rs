@@ -2,10 +2,11 @@ use std::cell::UnsafeCell;
 use std::mem::MaybeUninit;
 use std::sync::atomic::AtomicU8;
 use std::sync::atomic::Ordering::*;
+use std::{fmt, ops};
 
 // TODO:
 //  All of this `OnceCell<T>` nonsense should be replaced by the standard library's when it is
-//  stabilized.
+//  stabilized. We might even be able to use standard "lazy" type!
 
 /// Indicates that a [`OnceCell<T>`] is not yet initialized.
 const UNINIT: u8 = 0;
@@ -97,17 +98,15 @@ impl<T> OnceCell<T> {
                     //  underlying value.
                     break unsafe { &*self.value.assume_init_ref().get() };
                 }
-                Err(IN_PROGRESS) => {
+                Err(IN_PROGRESS | UNINIT) => {
                     // The value is currently being initialized by another thread. We just have to
-                    // retry sometime later.
+                    // retry sometime later. This branch also takes care of spurious fails of
+                    // `compare_exchange_weak`.
 
                     // NOTE:
                     //  This is basically a spin-loop. It's not ideal, but it will suffice for our
                     //  use-case.
                     std::thread::yield_now();
-                }
-                Err(UNINIT) => {
-                    // Just retry. `compare_exchange_weak` can sometimes fail to swap the value.
                 }
                 Err(_) => unsafe {
                     // SAFETY:
@@ -120,23 +119,54 @@ impl<T> OnceCell<T> {
     }
 }
 
-/// The arguments that were collected using `std::env::args`.
-static ARGS: OnceCell<Box<[Box<str>]>> = OnceCell::new();
+/// Represents the arguments passed to the application.
+pub struct Args {
+    /// The cached arguments.
+    ///
+    /// The first time those arguments are accessed, this cell is initialized.
+    cache: OnceCell<Box<[Box<str>]>>,
+}
 
-/// Returns the arguments that were passed to the application through command-line arguments.
+impl Args {
+    /// Creates a new [`Args`] instance.
+    const fn new() -> Self {
+        Self {
+            cache: OnceCell::new(),
+        }
+    }
+
+    /// Forces the cache of this [`Args`] instance to be populated. The content of the now-complete
+    /// cache is returned.
+    fn force(&self) -> &[Box<str>] {
+        self.cache
+            .get_or_init(|| std::env::args().map(String::into_boxed_str).collect())
+    }
+}
+
+impl fmt::Debug for Args {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(self.force(), f)
+    }
+}
+
+impl ops::Index<usize> for Args {
+    type Output = str;
+
+    #[inline]
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.force()[index]
+    }
+}
+
+/// The arguments passed to the application.
 ///
 /// # Examples
 ///
 /// ```no_run
-/// // If the program is called like this:
-/// //  ./my_program a b c
+/// use ftkit::ARGS;
 ///
-/// assert_eq!(ftkit::args(), ["./my_program", "a", "b", "c"]);
+/// println!("{} arguments!", ARGS.len());
+/// println!("name of the process: {}", &ARGS[0]);
 /// ```
-pub fn args() -> &'static [&'static str] {
-    let boxes = ARGS.get_or_init(|| std::env::args().map(String::into_boxed_str).collect());
-
-    // SAFETY:
-    //  `Box<str>` and `&str` have the same memory layout.
-    unsafe { std::mem::transmute::<&[Box<str>], &[&str]>(boxes.as_ref()) }
-}
+pub static ARGS: Args = Args::new();
