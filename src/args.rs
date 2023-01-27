@@ -120,6 +120,8 @@ impl<T> OnceCell<T> {
 }
 
 /// Represents the arguments passed to the application.
+///
+/// See [`ARGS`] more detailed information.
 pub struct Args {
     /// The cached arguments.
     ///
@@ -141,6 +143,35 @@ impl Args {
         self.cache
             .get_or_init(|| std::env::args().map(String::into_boxed_str).collect())
     }
+
+    /// Returns the number of command-line arguments passed to the application.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use ftkit::ARGS;
+    ///
+    /// println!("count: {}", ARGS.len());
+    /// ```
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.force().len()
+    }
+
+    /// Returns whether the process was executed without any arguments.
+    ///
+    /// Note that this is very unlikely. Even when no concrete arguments are passed to the
+    /// process, its name is still used as the first and only argument.
+    ///
+    /// ```no_run
+    /// use ftkit::ARGS;
+    ///
+    /// assert!(!ARGS.is_empty());
+    /// ```
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.force().is_empty()
+    }
 }
 
 impl fmt::Debug for Args {
@@ -159,9 +190,75 @@ impl ops::Index<usize> for Args {
     }
 }
 
+/// An iterator over the arguments passed to the program.
+#[derive(Debug, Clone)]
+pub struct ArgsIter<'a> {
+    inner: std::slice::Iter<'a, Box<str>>,
+}
+
+impl<'a> Iterator for ArgsIter<'a> {
+    type Item = &'a str;
+
+    #[inline(always)]
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(Box::as_ref)
+    }
+
+    #[inline(always)]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
+
+    #[inline(always)]
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        self.inner.nth(n).map(Box::as_ref)
+    }
+
+    #[inline(always)]
+    fn count(self) -> usize
+    where
+        Self: Sized,
+    {
+        self.inner.count()
+    }
+}
+
+impl<'a> DoubleEndedIterator for ArgsIter<'a> {
+    #[inline(always)]
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.inner.next_back().map(Box::as_ref)
+    }
+
+    #[inline(always)]
+    fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
+        self.inner.nth_back(n).map(Box::as_ref)
+    }
+}
+
+impl<'a> ExactSizeIterator for ArgsIter<'a> {
+    #[inline(always)]
+    fn len(&self) -> usize {
+        self.inner.len()
+    }
+}
+
+impl<'a> IntoIterator for &'a Args {
+    type Item = &'a str;
+    type IntoIter = ArgsIter<'a>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        ArgsIter {
+            inner: self.force().iter(),
+        }
+    }
+}
+
 /// The arguments passed to the application.
 ///
 /// # Examples
+///
+/// Accessing each argument individually:
 ///
 /// ```no_run
 /// use ftkit::ARGS;
@@ -169,4 +266,30 @@ impl ops::Index<usize> for Args {
 /// println!("{} arguments!", ARGS.len());
 /// println!("name of the process: {}", &ARGS[0]);
 /// ```
-pub static ARGS: Args = Args::new();
+///
+/// Using a `for`-loop:
+///
+/// ```no_run
+/// use ftkit::ARGS;
+///
+/// for arg in ARGS {
+///     println!("{arg}");
+/// }
+/// ```
+pub static ARGS: &Args = {
+    // The type becomes easier to use when the static itself is a reference. Specifically, it
+    // allows user to do
+    //
+    //     for arg in ARGS
+    //
+    // rather than
+    //
+    //     for arg in &ARGS
+    //
+    // ...which is clearer in my opinion.
+    //
+    // Every method inherent to the `Args` type takes references in any case, so this wont have any
+    // impact on anything.
+    static STORAGE: Args = Args::new();
+    &STORAGE
+};
